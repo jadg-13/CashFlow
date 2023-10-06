@@ -49,7 +49,6 @@ const isNegative = computed(() => amount.value <0);
 const emit = defineEmits(["remove"]);
 
 const remove = () =>{
-    console.log(id.value);
     emit("remove", id.value);
 };
 
@@ -99,7 +98,6 @@ h4 {
 .green {
   color: green;
 }
-
 .boton {
     transition: transform 0.3s;
 }

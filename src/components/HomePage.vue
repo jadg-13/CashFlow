@@ -6,15 +6,17 @@
     <template #resume>
       <Resume :label="'Ahorro Total'" :amount="amount" :total-amount="totalAmount">
         <template #graphic>
-          <Graphic :amounts="amounts"/>
+          <Graphic :amounts="amounts" @select = "select" />
         </template>
-        <template #action><Action/></template>
+        <template #action>
+          <Action @create="create" />
+        </template>
       </Resume>
     </template>
     <template #movements>
       <Movements 
-      :movements="movements"
-      />
+        :movements="movements"
+        @remove="remove" />
     </template>
   </Layout>
 </template>
@@ -34,39 +36,63 @@ export default {
     Movements,
     Action,
     Graphic,
-},
+  },
   data() {
     return {
       label: null,
       amount: null,
-      totalAmount: 0,
-      amounts:[300, 200, 350, -50, 562, 556, 100, 300, -20, 230],
-      movements: [
-        {
-          id: 1,
-          title: "Deposito 1",
-          description: "Pago mensual",
-          amount: 100,
-        },
-        {
-          id: 2,
-          title: "Deposito 2",
-          description: "Pago mensual",
-          amount: 100,
-        },
-        {
-          id: 3,
-          title: "Deposito 3",
-          description: "Pago mensual",
-          amount: 100,
-        },
-        {
-          id: 4,
-          title: "Deposito 4",
-          description: "Pago mensual",
-          amount: 100,
-        },
-      ]
+      movements: []
+    }
+  },
+  computed: {
+    amounts() {
+      const lastDays = this.movements
+        .filter(m => {
+          const today = new Date();
+          const oldDate = today.setDate(today.getDate() - 30);
+
+          return m.time >= oldDate;
+        })
+        .map(m => m.amount)
+
+      return lastDays.map((m, i) => {
+        const lastMovements = lastDays.slice(0, i+1);
+        return lastMovements.reduce((suma, movement) => {
+          return suma + movement
+        }, 0);
+      });
+    },
+    totalAmount() {
+      return this.movements.reduce((suma, m) => {
+        return suma + m.amount;
+      }, 0);
+    }
+  },
+  
+  mounted() {
+    const movements = JSON.parse(localStorage.getItem("movements"));
+
+    if (Array.isArray(movements)) {
+      this.movements = movements.map(m => {
+        return { ...m, time: new Date(m.time) };
+      });
+    }
+  },
+  methods: {
+    create(movement) {
+      this.movements.push(movement);
+      this.save();
+    },
+    remove(id) {
+      const index = this.movements.findIndex(m => m.id === id);
+      this.movements.splice(index, 1);
+      this.save();
+    },
+    save() {
+      localStorage.setItem("movements", JSON.stringify(this.movements))
+    },
+    select(el){
+      this.amount = el;
     }
   },
 };
